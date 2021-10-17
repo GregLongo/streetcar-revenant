@@ -176,7 +176,7 @@ scene("start", (args = {}) => {
     scale(2)
   ])
   add([
-    text('Streetlight Revenant'),
+    text('Streetcar Revenant'),
     origin('center'),
     pos(width()/2, height()/2.5),
     scale(6)
@@ -187,8 +187,9 @@ scene("start", (args = {}) => {
     pos(width()/2, height()/2),
     scale(2)
   ])
-  addButton("play", vec2(610, 500), () => {
-    go('main')
+  addButton("play", vec2(width()/2, height()/1.5), () => {
+    go('main'),
+    scale(2)
   });
 });
 
@@ -200,7 +201,7 @@ add([
   scale(10)
 ])
 
-	addButton("replay", vec2(610, 500), () => {
+	addButton("replay", vec2(width()/2, height()/1.5), () => {
     go('main')
 	});
 
@@ -208,7 +209,7 @@ add([
 
 scene("main", (args = {}) => {
 layers(['bg','obj' ,'ui'], 'obj')
-camIgnore(["bg"]);
+camIgnore(["bg",'ui']);
 
 const MOVE_SPEED = 220
 const JUMP_FORCE = 400
@@ -227,7 +228,7 @@ const maps =[
     '       )             ~ )         ',
     '       )    *    @%@@@ )         ',
     '       )               )         ',
-    '   C   )      0        )       D ',
+    '   C   )      ^        )       D ',
     '       )               )         ',
     '=================================='
   ],
@@ -236,10 +237,10 @@ const maps =[
     'W                                W',
     'W                                W',
     'W                                W',
-    'W                                W',
+    'W                        ~       W',
     'W   *    @%@@@          S S      W',
     'W                     S S S      W',
-    'W       !           S S S S    D W',
+    'W   B   !           S S S S    D W',
     'W                 S S S S S      W',
     'W________________________________W'
   ]
@@ -263,6 +264,7 @@ const levelCfg = {
   'D': [sprite('Door1_Simple'), 'door', 'locked'],
   'Q': [sprite('Door_Wood'), 'wood', 'door', 'locked'],
   'C': [sprite('Door_Cursed'), 'cursed', 'door', 'locked'],
+  'B': [sprite('Door1_Simple'), 'back', 'door', 'unlocked'],
   '@': [sprite('balcony'), solid()],
   'S': [sprite('Brick2_with_fungus_upper_edge'), solid()],
   // '^':  [rect(32, 64), ,'dangerous', 'skeleton', solid(), body()],
@@ -272,24 +274,25 @@ const levelCfg = {
   '&': [sprite('baddie-4',{animSpeed: 0.05,frame: 125}),'dangerous', 'baddie','skeletonMage',  origin('center'), solid(), body(),{dir:-1, timer:0}],
   '~': [sprite('key'),'key'],
   'F': [sprite('fireCharm'), 'fireCharm'],
-  'G': [sprite('starCharm'), 'starCharm', scale(2)]
-
+  'G': [sprite('starCharm'), 'starCharm', scale(2)],
+  pos:vec2(0, 0)
 }
 
 const levelIndex = args.level ?? 0
-const gameLevel = addLevel(maps[levelIndex], levelCfg)
+const gameLevel = addLevel(maps[levelIndex], levelCfg )
 
 const scoreGlobal = args.score ?? 0
 const scoreLabel = add([
   text(scoreGlobal),
-  pos(30, 6),
+  pos(150, 6),
   layer('ui'),
+  scale(2),
   {
     value: '0',
   }
 ])
 
-add([text('level ' + parseInt(levelIndex + 1)), pos(40,6)])
+add([text('level ' + parseInt(levelIndex + 1)), pos(20,6),layer('ui'),scale(2)])
 
 function big() {
   let timer = 0
@@ -314,7 +317,7 @@ function big() {
     },
     biggify(time){
      // this.scale = vec2(1.5)
-     add([text('High Jump'), pos(300, 10)])
+     add([text('High Jump'), pos(300, 10),layer('ui')])
       timer= time
       isBig = true
       CURRENT_JUMP_FORCE = BIG_JUMP_FORCE
@@ -326,12 +329,21 @@ add([
   sprite("bg"),
   layer('bg'),
 ])
+var thisPos;
+
+
+if(args.back==true){
+  thisPos= gameLevel.getPos(32,9)
+}
+else{
+  thisPos= gameLevel.getPos(4,9)
+}
 const player = add([
   sprite('heroine',{
     animSpeed: 0.1,
     frame: 143
   }),
-  pos(30,0),
+  pos(thisPos),
   {
     dir: vec2(-1,0)
   },
@@ -342,8 +354,10 @@ const player = add([
   ],
 )
 
+
 player.action(() => {
     player.resolve();
+
 });
 //
 // const skeleton = add([
@@ -812,8 +826,8 @@ let hasKey = false;
 player.overlaps("key", (key) => {
   destroy(key);
   hasKey = true;
-  add([sprite('key'), pos(500, 0)])
-  add([text('Key'), pos(600, 10)])
+  add([sprite('key'), pos(500, 0),layer('ui')]);
+  add([text('Key'), pos(600, 10),layer('ui')])
 
 });
 
@@ -822,6 +836,7 @@ player.overlaps("key", (key) => {
 player.overlaps('door', (d) =>{
 
   keyPress('tab', () =>{
+
     if(d.is('locked')){
 
     if(hasKey){
@@ -841,11 +856,25 @@ player.overlaps('door', (d) =>{
     }else{
       d.changeSprite('Door1_Tape')
       keyPress('tab', () =>{
-        player.stop();
-          go ('main',{
-            level: (levelIndex + 1) % maps.length,
-            score: scoreLabel.value
-        })
+        if(d.is('back')){
+          wait(.3,()=>{
+            player.stop();
+              go ('main',{
+                level: (levelIndex - 1) % maps.length,
+                score: scoreLabel.value,
+                back:true
+            })
+          })
+        }else{
+          wait(.3,()=>{
+            player.stop();
+              go ('main',{
+                level: (levelIndex + 1 ) % maps.length,
+                score: scoreLabel.value,
+                back:false
+            })
+          })
+        }
       })
     }
   })
@@ -855,4 +884,4 @@ player.overlaps('door', (d) =>{
 
 });
 start("start");
-debug.inspect = true;
+// debug.inspect = true;
