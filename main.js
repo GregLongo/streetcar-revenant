@@ -99,7 +99,7 @@ loadSprite("baddie-3", "sprites/elf_mage.png", {
   },
 })
 
-loadSprite("baddie-4", "sprites/skeleton_mage.png", {
+loadSprite("baddie-4", "sprites/tuxskel.png", {
   sliceX: 13,
   sliceY: 21,
   anims: {
@@ -228,7 +228,7 @@ const maps =[
     '       )             ~ )         ',
     '       )    *    @%@@@ )         ',
     '       )               )         ',
-    '   C   )      ^        )       D ',
+    '   C   )      &        )       D ',
     '       )               )         ',
     '=================================='
   ],
